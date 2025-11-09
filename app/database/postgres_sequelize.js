@@ -15,20 +15,22 @@ const _userRol = Object.freeze({
         user: "user",
 })
 
-export function initializeConnectionToPG() {
-        return new Promise((resolve, reject) => {
-                try {
-                        sequelize.authenticate()
-                        resolve(true)
-                } catch (e) {
-                        reject(e)
-                }
-        })
+export async function initializeConnectionToPG() {
+    try {
+        await sequelize.authenticate()
+        console.log("db connected")
+        return true
+    } catch (e) {
+        console.error("db connection failed", e)
+        throw e
+    }
 }
+
 
 export class User extends Model {}
 export class OtpCode extends Model {}
 export class Notification extends Model {}
+export class UserDeviceLog extends Model {}
 
 User.init(
     {
@@ -39,16 +41,17 @@ User.init(
             },
             firstname: {
                     type: DataTypes.STRING,
-                    allowNull: false,
+
+                    allowNull: true,defaultValue:""
             },
             lastname: {
                     type: DataTypes.STRING,
-                    allowNull: false,
+                    allowNull: true,defaultValue:""
             },
             national_code: {
                     type: DataTypes.STRING,
-                    allowNull: false,
-                    unique: true,
+                    allowNull: true,
+                    unique: true,defaultValue:""
             },
             birthday: {
                     type: DataTypes.DATEONLY,
@@ -56,19 +59,19 @@ User.init(
             },
             phone: {
                     type: DataTypes.STRING,
-                    allowNull: true,
+                    allowNull: false,
             },
             email: {
                     type: DataTypes.STRING,
-                    allowNull: true,
+                    allowNull: true,defaultValue:""
             },
             gender: {
                     type: DataTypes.STRING,
-                    allowNull: true,
+                    allowNull: true,defaultValue:""
             },
             education: {
                     type: DataTypes.STRING,
-                    allowNull: true,
+                    allowNull: true,defaultValue:""
             },
             document_image: {
                     type: DataTypes.STRING,
@@ -162,7 +165,55 @@ Notification.init(
             timestamps: true,
     }
 )
-
+UserDeviceLog.init(
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        user_id: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            references: {
+                model: User,
+                key: "id"
+            }
+        },
+        firebase_token: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        phone_model: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        android_version: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        app_version: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        ip_address: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        platform: {
+            type: DataTypes.STRING,
+            allowNull: true
+        }
+    },
+    {
+        sequelize,
+        modelName: "UserDeviceLog",
+        tableName: "user_device_logs",
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: false
+    }
+)
 OtpCode.init(
     {
             id: {
@@ -185,6 +236,14 @@ Notification.belongsTo(User, {
         foreignKey: "target_user_id",
         as: "TargetUser",
 })
+User.hasMany(UserDeviceLog, {
+    foreignKey: "user_id",
+    as: "deviceLogs"
+})
 
+UserDeviceLog.belongsTo(User, {
+    foreignKey: "user_id",
+    as: "user"
+})
 User.hasMany(OtpCode, { foreignKey: "userId" })
 OtpCode.belongsTo(User, { foreignKey: "userId" })

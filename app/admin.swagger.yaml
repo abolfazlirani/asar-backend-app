@@ -3,19 +3,25 @@ info:
   title: Asar – Admin API
   version: 1.0.0
   description: >
-    This documentation contains admin-only endpoints for managing users, plans, notifications, and other administrative tasks in the Asar Gold project.
+    This documentation contains admin-only endpoints for managing users, remote config logs, and other administrative tasks in the Asar Gold project.
 
 servers:
-  - url: http://localhost:4000/api/v1
+  - url: http://localhost:1000/api/v1
     description: Local Development
   - url: https://api.asarmulticenter.ir/api/v1
     description: Production
 
 tags:
+  - name: auth
+    description: Admin authentication endpoints
   - name: users
     description: Endpoints related to user management (admin only)
+  - name: remote-config
+    description: Endpoints for managing remote config and device logs (admin only)
 
 paths:
+
+
   /admin/users:
     post:
       tags:
@@ -213,12 +219,313 @@ paths:
         "404":
           description: User not found
 
+  /admin/remote_config/logs:
+    get:
+      tags:
+        - remote-config
+      summary: Get remote config device logs
+      description: Returns a paginated list of remote config logs (device info, IP, versions).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page.
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter logs by user ID.
+        - name: platform
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [android, ios]
+          description: Filter logs by platform.
+      responses:
+        "200":
+          description: Paginated list of remote config logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoteConfigLogsResponse'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /auth/send-otp:
+    post:
+      tags:
+        - auth
+      summary: Send OTP code to user
+      description: Sends a one-time password (OTP) to the user's phone number for authentication.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - phone
+              properties:
+                phone:
+                  type: string
+                  example: "09038177456"
+      responses:
+        "200":
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "code sent"
+                  code:
+                    type: string
+                    example: "1234"
+        "400":
+          description: Too many requests or invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Code already sent"
+
+  /auth/confirm-code:
+    post:
+      tags:
+        - auth
+      summary: Verify OTP code
+      description: Verifies the OTP code and authenticates the user, returning a JWT token.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - phone
+                - code
+              properties:
+                phone:
+                  type: string
+                  example: "09038177456"
+                code:
+                  type: string
+                  example: "1234"
+      responses:
+        "200":
+          description: Verified and authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "authorized"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "b3f1a0d9-9cba-46cd-9ac0-b72a559f3a6f"
+                      firstname:
+                        type: string
+                        example: "Ali"
+                      lastname:
+                        type: string
+                        example: "Ahmadi"
+                      phone:
+                        type: string
+                        example: "09038177456"
+                      profile_pic:
+                        type: string
+                        example: "https://storage.asar.app/user/profile.png"
+                      role:
+                        type: string
+                        example: "user"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2025-11-09T14:30:00.000Z"
+        "400":
+          description: Invalid or expired code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid code or phone number"
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+  schemas:
+    AdminLoginRequest:
+      type: object
+      required:
+        - phone
+        - password
+      properties:
+        phone:
+          type: string
+          example: "09120000000"
+        password:
+          type: string
+          example: "adminPassword123"
+
+    AdminLoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          $ref: '#/components/schemas/AdminUserSummary'
+
+    AdminUserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "d3f1c8a2-0f3c-4cf6-bb0e-2ad3bde81234"
+        firstname:
+          type: string
+          example: Ali
+        lastname:
+          type: string
+          example: Ahmadi
+        phone:
+          type: string
+          example: "09120000000"
+        role:
+          type: string
+          example: admin
+
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "fb2bd6a0-7e3b-4cde-bf1f-cb9f3d3c9c21"
+        firstname:
+          type: string
+          example: Amir
+        lastname:
+          type: string
+          example: Karimi
+        phone:
+          type: string
+          example: "09123456789"
+        email:
+          type: string
+          example: "user@example.com"
+
+    RemoteConfigLog:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "0b4b0e4d-7f4d-4b65-aaf8-08f8b4e4b6a2"
+        user:
+          $ref: '#/components/schemas/UserSummary'
+        firebase_token:
+          type: string
+          example: "aaa.bbb.ccc"
+        phone_model:
+          type: string
+          example: "Samsung A54"
+        android_version:
+          type: string
+          example: "15"
+        app_version:
+          type: string
+          example: "1.2.3"
+        ip_address:
+          type: string
+          example: "192.168.1.10"
+        platform:
+          type: string
+          example: "android"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-09T10:15:30.000Z"
+
+    PaginationMetadata:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total_pages:
+          type: integer
+          example: 6
+        has_next_page:
+          type: boolean
+          example: true
+        has_prev_page:
+          type: boolean
+          example: false
+
+    RemoteConfigLogsResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 200
+        data:
+          type: object
+          properties:
+            logs:
+              type: array
+              items:
+                $ref: '#/components/schemas/RemoteConfigLog'
+            metadata:
+              $ref: '#/components/schemas/PaginationMetadata'
+        cached:
+          type: boolean
+          example: false
 
 security:
   - bearerAuth: []

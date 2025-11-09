@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: DockerFile
     ports:
-      - "4000:3000"
+      - "1000:3000"
     environment:
       - DATABASE_USER=root
       - DATABASE_PASS=root
@@ -26,10 +26,8 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=asar
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=root
     ports:
-      - "5430:3306"
+      - "5230:3306"
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
@@ -47,7 +45,7 @@ services:
       - PMA_USER=root
       - PMA_PASSWORD=root
     ports:
-      - "5020:80"
+      - "5120:80"
     depends_on:
       - db
 
