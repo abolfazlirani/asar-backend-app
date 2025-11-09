@@ -1,0 +1,135 @@
+openapi: 3.0.0
+info:
+  title: Asar API
+  version: 1.0.0
+  description: API documentation for Asar Gold project
+
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Local Development
+  - url: https://api.asarmulticenter.ir/api/v1
+    description: Production
+
+tags:
+  - name: auth
+    description: Authentication via OTP
+
+paths:
+  /auth/send-otp:
+    post:
+      tags:
+        - auth
+      summary: Send OTP code to user
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - phone
+              properties:
+                phone:
+                  type: string
+                  example: "09038177456"
+      responses:
+        "200":
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "code sent"
+                  code:
+                    type: string
+                    example: "1234"
+        "400":
+          description: Too many requests or invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Code already sent"
+
+  /auth/confirm-code:
+    post:
+      tags:
+        - auth
+      summary: Verify OTP code
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - phone
+                - code
+              properties:
+                phone:
+                  type: string
+                  example: "09038177456"
+                code:
+                  type: string
+                  example: "1234"
+      responses:
+        "200":
+          description: Verified and authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "authorized"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      firstname:
+                        type: string
+                      lastname:
+                        type: string
+                      phone:
+                        type: string
+                      profile_pic:
+                        type: string
+                      role:
+                        type: string
+                      createdAt:
+                        type: string
+                        format: date-time
+        "400":
+          description: Invalid or expired code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid code or phone number"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []

@@ -1,0 +1,224 @@
+openapi: 3.0.0
+info:
+  title: Asar – Admin API
+  version: 1.0.0
+  description: >
+    This documentation contains admin-only endpoints for managing users, plans, notifications, and other administrative tasks in the Asar Gold project.
+
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Local Development
+  - url: https://api.asarmulticenter.ir/api/v1
+    description: Production
+
+tags:
+  - name: users
+    description: Endpoints related to user management (admin only)
+
+paths:
+  /admin/users:
+    post:
+      tags:
+        - users
+      summary: Create a new user
+      description: Allows an admin to create a new user account by providing required personal details.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - firstname
+                - lastname
+                - national_code
+                - phone
+                - password
+              properties:
+                firstname:
+                  type: string
+                  example: Ali
+                lastname:
+                  type: string
+                  example: Ahmadi
+                national_code:
+                  type: string
+                  example: "1234567890"
+                phone:
+                  type: string
+                  example: "09120000000"
+                password:
+                  type: string
+                  example: "securepassword123"
+                role:
+                  type: string
+                  enum: [user, admin]
+                  example: user
+      responses:
+        "201":
+          description: User successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User created successfully
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "d3f1c8a2-0f3c-4cf6-bb0e-2ad3bde81234"
+                      firstname:
+                        type: string
+                        example: Ali
+                      lastname:
+                        type: string
+                        example: Ahmadi
+                      phone:
+                        type: string
+                        example: "09120000000"
+                      role:
+                        type: string
+                        example: user
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2025-06-21T14:32:00.000Z"
+        "409":
+          description: User with the provided phone number already exists
+        "400":
+          description: Bad request – missing or invalid fields
+        "401":
+          description: Unauthorized – missing or invalid token
+        "403":
+          description: Forbidden – admin access required
+
+    get:
+      tags:
+        - users
+      summary: Get all users
+      description: Returns a list of all registered users. Admin only.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "fb2bd6a0-7e3b-4cde-bf1f-cb9f3d3c9c21"
+                    firstname:
+                      type: string
+                      example: Amir
+                    lastname:
+                      type: string
+                      example: Karimi
+                    phone:
+                      type: string
+                      example: "09123456789"
+                    role:
+                      type: string
+                      example: user
+                    createdAt:
+                      type: string
+                      format: date-time
+                      example: "2025-06-20T12:00:00.000Z"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /admin/users/{id}:
+    put:
+      tags:
+        - users
+      summary: Update a user
+      description: Allows admin to update selected user information
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                firstname:
+                  type: string
+                  example: Reza
+                lastname:
+                  type: string
+                  example: Moradi
+                phone:
+                  type: string
+                  example: "09125554444"
+                national_code:
+                  type: string
+                  example: "1234567891"
+                role:
+                  type: string
+                  enum: [user, admin]
+                  example: admin
+      responses:
+        "200":
+          description: User updated successfully
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: User not found
+
+    delete:
+      tags:
+        - users
+      summary: Delete a user
+      description: Allows admin to delete a user by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User deleted successfully
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: User not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []

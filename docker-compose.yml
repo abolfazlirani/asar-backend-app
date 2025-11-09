@@ -1,0 +1,53 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: DockerFile
+    ports:
+      - "4000:3000"
+    environment:
+      - DATABASE_USER=root
+      - DATABASE_PASS=root
+      - DATABASE_URL=postgresql://root:root@db:5432/ahmarnezhad_gold
+      - JWT_PASS=StorySaz@flutterFarsi.INC
+      - OTP_LENGTH=4
+      - NODE_ENV=development
+      - APP_STATE=dev
+      - PORT=3000
+    volumes:
+      - './upload:/app/public/upload'
+    depends_on:
+      - db
+  db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=ahmarnezhad_gold
+    ports:
+      - "5430:5432"
+    volumes:
+      - db_data:/var/lib/posgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready","-U","root","-d","ahmarnezhad_gold"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+      start_period: 10s
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "5020:80"
+    depends_on:
+      - db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+volumes:
+  db_data: {}
+  pgadmin_data: {}
