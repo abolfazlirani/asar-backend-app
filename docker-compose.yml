@@ -9,7 +9,7 @@ services:
     environment:
       - DATABASE_USER=root
       - DATABASE_PASS=root
-      - DATABASE_URL=postgresql://root:root@db:5432/ahmarnezhad_gold
+      - DATABASE_URL=mysql://root:root@db:3306/asar
       - JWT_PASS=StorySaz@flutterFarsi.INC
       - OTP_LENGTH=4
       - NODE_ENV=development
@@ -19,35 +19,37 @@ services:
       - './upload:/app/public/upload'
     depends_on:
       - db
+
   db:
-    image: postgres
+    image: mysql:8
     restart: always
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
-      - POSTGRES_DB=ahmarnezhad_gold
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=asar
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
     ports:
-      - "5430:5432"
+      - "5430:3306"
     volumes:
-      - db_data:/var/lib/posgresql/data
+      - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "pg_isready","-U","root","-d","ahmarnezhad_gold"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "db"]
       interval: 60s
       timeout: 30s
       retries: 5
       start_period: 10s
-  pgadmin:
-    image: dpage/pgadmin4
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
     restart: always
     environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@gmail.com
-      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PMA_HOST=db
+      - PMA_USER=root
+      - PMA_PASSWORD=root
     ports:
       - "5020:80"
     depends_on:
       - db
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+
 volumes:
   db_data: {}
-  pgadmin_data: {}
