@@ -31,7 +31,104 @@ export class User extends Model {}
 export class OtpCode extends Model {}
 export class Notification extends Model {}
 export class UserDeviceLog extends Model {}
+export class Article extends Model {}
+export class PostCategory extends Model {}
 
+PostCategory.init(
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true,
+        },
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        image: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        parentId: {
+            type: DataTypes.UUID,
+            allowNull: true,
+            references: {
+                model: 'post_categories',
+                key: 'id',
+            },
+        },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
+        },
+        lang: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            defaultValue: "fa",
+        },
+    },
+    {
+        sequelize,
+        modelName: "PostCategory",
+        tableName: "post_categories",
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: "updated_at",
+    }
+)
+Article.init(
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true,
+        },
+        title: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        content: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
+        image: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        share_count: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
+        lang: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: "fa",
+        },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
+        },
+        categoryId: {
+            type: DataTypes.UUID,
+            allowNull: true,
+            references: {
+                model: PostCategory,
+                key: 'id'
+            }
+        }
+    },
+    {
+        sequelize,
+        modelName: "Article",
+        tableName: "articles",
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: "updated_at",
+    }
+)
 User.init(
     {
             id: {
@@ -247,3 +344,7 @@ UserDeviceLog.belongsTo(User, {
 })
 User.hasMany(OtpCode, { foreignKey: "userId" })
 OtpCode.belongsTo(User, { foreignKey: "userId" })
+PostCategory.hasMany(PostCategory, { as: 'children', foreignKey: 'parentId' })
+PostCategory.belongsTo(PostCategory, { as: 'parent', foreignKey: 'parentId' })
+Article.belongsTo(PostCategory, { foreignKey: 'categoryId', as: 'category' })
+PostCategory.hasMany(Article, { foreignKey: 'categoryId', as: 'articles' })

@@ -13,6 +13,10 @@ servers:
 tags:
   - name: auth
     description: Authentication via OTP
+  - name: categories
+    description: Endpoints for retrieving post categories
+  - name: articles
+    description: Endpoints for retrieving articles (posts)
   - name: remote_config
     description: Remote Configuration
 
@@ -61,7 +65,6 @@ paths:
                   message:
                     type: string
                     example: "Code already sent"
-
   /auth/confirm-code:
     post:
       tags:
@@ -125,7 +128,141 @@ paths:
                   message:
                     type: string
                     example: "Invalid code or phone number"
-
+  /categories:
+    get:
+      tags:
+        - categories
+      summary: Get post categories
+      description: Returns a list of categories. Use parentId query to get sub-categories.
+      parameters:
+        - name: lang
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "fa"
+            default: "fa"
+          description: Filter by language.
+        - name: parentId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Provide a parent ID to fetch its direct sub-categories. Omit for top-level categories.
+      responses:
+        "200":
+          description: List of categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriesApiResponse'
+  /articles:
+    get:
+      tags:
+        - articles
+      summary: Get articles
+      description: Returns a paginated list of articles.
+      parameters:
+        - name: lang
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "fa"
+            default: "fa"
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        "200":
+          description: List of articles retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleListApiResponse'
+  /articles/{id}:
+    get:
+      tags:
+        - articles
+      summary: Get single article
+      description: Returns details for a specific article.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Article ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Article details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleApiResponse'
+        "404":
+          description: Article not found
+  /articles/{id}/share:
+    post:
+      tags:
+        - articles
+      summary: Increment article share count
+      description: Increments the share_count of an article by 1.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Article ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Share count incremented
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Share count incremented"
+                  data:
+                    type: object
+                    properties:
+                      share_count:
+                        type: integer
+                        example: 1
+        "404":
+          description: Article not found
   /remote_config/splash:
     post:
       tags:
@@ -163,13 +300,141 @@ paths:
                   message:
                     type: string
                     example: "Unauthorized"
-
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
+  schemas:
+    PostCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+        name:
+          type: string
+          example: "اخبار"
+        image:
+          type: string
+          example: "uploads/categories/image.png"
+          nullable: true
+        lang:
+          type: string
+          example: "fa"
+        is_active:
+          type: boolean
+          example: true
+    CategoriesApiResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 200
+        data:
+          type: object
+          properties:
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/PostCategory'
+        cached:
+          type: boolean
+          example: false
+    Article:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "e1f8a0d9-9cba-46cd-9ac0-b72a559f3a6f"
+        title:
+          type: string
+          example: "تیتر مقاله"
+        content:
+          type: string
+          example: "<p>متن <strong>HTML</strong>.</p>"
+        image:
+          type: string
+          example: "uploads/articles/image.png"
+          nullable: true
+        share_count:
+          type: integer
+          example: 0
+        lang:
+          type: string
+          example: "fa"
+        is_active:
+          type: boolean
+          example: true
+        categoryId:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-11T10:00:00.000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-11-11T10:00:00.000Z"
+        category:
+          $ref: '#/components/schemas/PostCategory'
+    ArticleApiResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 200
+        data:
+          type: object
+          properties:
+            article:
+              $ref: '#/components/schemas/Article'
+        cached:
+          type: boolean
+          example: false
+    PaginationMetadata:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        total_pages:
+          type: integer
+          example: 12
+        has_next_page:
+          type: boolean
+          example: true
+        has_prev_page:
+          type: boolean
+          example: false
+    ArticleListApiResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 200
+        data:
+          type: object
+          properties:
+            articles:
+              type: array
+              items:
+                $ref: '#/components/schemas/Article'
+            metadata:
+              $ref: '#/components/schemas/PaginationMetadata'
+        cached:
+          type: boolean
+          example: false
 security:
   - bearerAuth: []

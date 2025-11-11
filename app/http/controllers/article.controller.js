@@ -1,0 +1,228 @@
+import { Article, PostCategory } from "../../database/postgres_sequelize.js";
+import { generatePaginationInfo } from "../../utils/functions.js";
+import { getFileAddress } from "../../utils/multer.config.js";
+import { Sequelize } from "sequelize";
+
+class ArticleController {
+    async createArticle(req, res, next) {
+        try {
+            const { title, content, categoryId, lang } = req.body;
+            const imageAddres = getFileAddress(req);
+
+            if (!title || !content) {
+                return res.status(400).json({
+                    status: 400,
+                    message: "Fields `title` and `content` are required.",
+                });
+            }
+
+            if (categoryId) {
+                const category = await PostCategory.findByPk(categoryId);
+                if (!category) {
+                    return res.status(404).json({
+                        status: 404,
+                        message: "Category not found.",
+                    });
+                }
+            }
+
+            const article = await Article.create({
+                title,
+                content,
+                image: imageAddres || null,
+                categoryId: categoryId || null,
+                lang: lang || "fa",
+            });
+
+
+            return res.status(201).json({
+                status: 201,
+                message: "Article created successfully",
+                data: article,
+            });
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getAllArticles(req, res, next) {
+        try {
+            const lang = req.query.lang || "fa";
+            const categoryId = req.query.categoryId;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const offset = (page - 1) * limit;
+
+
+
+            let whereClause = {
+                lang,
+                is_active: true,
+            };
+
+            if (categoryId) {
+                whereClause.categoryId = categoryId;
+            }
+
+            const { count, rows } = await Article.findAndCountAll({
+                where: whereClause,
+                include: [{
+                    model: PostCategory,
+                    as: 'category',
+                    attributes: ['id', 'name', 'image']
+                }],
+                order: [["created_at", "DESC"]],
+                limit,
+                offset,
+            });
+
+            const metadata = generatePaginationInfo(count, limit, page);
+            const responseData = {
+                articles: rows,
+                metadata,
+            };
+
+
+            return res.status(200).json({
+                status: 200,
+                data: responseData,
+                cached: false,
+            });
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getSingleArticle(req, res, next) {
+        try {
+            const { id } = req.params;
+            const cacheKey = `articles:single:${id}`;
+
+
+
+            const article = await Article.findOne({
+                where: {
+                    id,
+                    is_active: true,
+                },
+                include: [{
+                    model: PostCategory,
+                    as: 'category',
+                    attributes: ['id', 'name', 'image']
+                }],
+            });
+
+            if (!article) {
+                return res.status(404).json({
+                    status: 404,
+                    message: "Article not found",
+                });
+            }
+
+            const responseData = { article };
+
+            return res.status(200).json({
+                status: 200,
+                data: responseData,
+                cached: false,
+            });
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async updateArticle(req, res, next) {
+        try {
+            const { id } = req.params;
+            const { title, content, categoryId, lang, is_active } = req.body;
+            const imageAddres = getFileAddress(req);
+
+            const article = await Article.findByPk(id);
+            if (!article) {
+                return res.status(404).json({
+                    status: 404,
+                    message: "Article not found",
+                });
+            }
+
+            if (categoryId) {
+                const category = await PostCategory.findByPk(categoryId);
+                if (!category) {
+                    return res.status(404).json({
+                        status: 404,
+                        message: "Category not found.",
+                    });
+                }
+            }
+
+            await article.update({
+                title: title ?? article.title,
+                content: content ?? article.content,
+                image: imageAddres ?? article.image,
+                categoryId: categoryId ?? article.categoryId,
+                lang: lang ?? article.lang,
+                is_active: is_active ?? article.is_active,
+            });
+
+
+            return res.status(200).json({
+                status: 200,
+                message: "Article updated successfully",
+                data: article,
+            });
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async deleteArticle(req, res, next) {
+        try {
+            const { id } = req.params;
+
+            const article = await Article.findByPk(id);
+            if (!article) {
+                return res.status(404).json({
+                    status: 404,
+                    message: "Article not found",
+                });
+            }
+
+            await article.destroy();
+
+
+            return res.status(200).json({
+                status: 200,
+                message: "Article deleted successfully",
+            });
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async incrementShare(req, res, next) {
+        try {
+            const { id } = req.params;
+
+            const article = await Article.findByPk(id);
+            if (!article) {
+                return res.status(404).json({
+                    status: 404,
+                    message: "Article not found",
+                });
+            }
+
+            const updatedArticle = await article.increment("share_count", { by: 1 });
+
+
+            return res.status(200).json({
+                status: 200,
+                message: "Share count incremented",
+                data: { share_count: updatedArticle.share_count },
+            });
+        } catch (e) {
+            next(e);
+        }
+    }
+}
+
+export const articleController = new ArticleController();
