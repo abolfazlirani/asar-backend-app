@@ -6,14 +6,40 @@ import { Sequelize } from "sequelize";
 class ArticleController {
     async createArticle(req, res, next) {
         try {
-            const { title, content, categoryId, lang } = req.body;
-            const imageAddres = getFileAddress(req);
+            const { title, content, categoryId, lang, post_type } = req.body;
+            const filePaths = getFileAddress(req);
 
-            if (!title || !content) {
+            const imageAddres = filePaths?.image || null;
+            const sourceAddress = filePaths?.source || null;
+
+            if (!title) {
                 return res.status(400).json({
                     status: 400,
-                    message: "Fields `title` and `content` are required.",
+                    message: "Field `title` is required.",
                 });
+            }
+
+            if (!post_type) {
+                return res.status(400).json({
+                    status: 400,
+                    message: "Field `post_type` is required.",
+                });
+            }
+
+            if (post_type === "article") {
+                if (!content) {
+                    return res.status(400).json({
+                        status: 400,
+                        message: "Field `content` is required for articles.",
+                    });
+                }
+            } else {
+                if (!sourceAddress) {
+                    return res.status(400).json({
+                        status: 400,
+                        message: "Field `source` file is required for this post type.",
+                    });
+                }
             }
 
             if (categoryId) {
@@ -28,12 +54,13 @@ class ArticleController {
 
             const article = await Article.create({
                 title,
-                content,
-                image: imageAddres || null,
+                post_type,
+                content: post_type === "article" ? content : null,
+                source: post_type !== "article" ? sourceAddress : null,
+                image: imageAddres,
                 categoryId: categoryId || null,
                 lang: lang || "fa",
             });
-
 
             return res.status(201).json({
                 status: 201,
@@ -52,8 +79,6 @@ class ArticleController {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const offset = (page - 1) * limit;
-
-
 
             let whereClause = {
                 lang,
@@ -82,11 +107,9 @@ class ArticleController {
                 metadata,
             };
 
-
             return res.status(200).json({
                 status: 200,
                 data: responseData,
-                cached: false,
             });
         } catch (e) {
             next(e);
@@ -96,9 +119,6 @@ class ArticleController {
     async getSingleArticle(req, res, next) {
         try {
             const { id } = req.params;
-            const cacheKey = `articles:single:${id}`;
-
-
 
             const article = await Article.findOne({
                 where: {
@@ -119,12 +139,9 @@ class ArticleController {
                 });
             }
 
-            const responseData = { article };
-
             return res.status(200).json({
                 status: 200,
-                data: responseData,
-                cached: false,
+                data: { article },
             });
         } catch (e) {
             next(e);
@@ -134,8 +151,11 @@ class ArticleController {
     async updateArticle(req, res, next) {
         try {
             const { id } = req.params;
-            const { title, content, categoryId, lang, is_active } = req.body;
-            const imageAddres = getFileAddress(req);
+            const { title, content, categoryId, lang, is_active, post_type } = req.body;
+            const filePaths = getFileAddress(req);
+
+            const imageAddres = filePaths?.image || null;
+            const sourceAddress = filePaths?.source || null;
 
             const article = await Article.findByPk(id);
             if (!article) {
@@ -155,15 +175,38 @@ class ArticleController {
                 }
             }
 
+            const newPostType = post_type ?? article.post_type;
+            let newContent = content ?? article.content;
+            let newSource = sourceAddress ?? article.source;
+
+            if (newPostType === "article") {
+                if (!newContent) {
+                    return res.status(400).json({
+                        status: 400,
+                        message: "Field `content` is required for articles.",
+                    });
+                }
+                newSource = null;
+            } else {
+                if (!newSource) {
+                    return res.status(400).json({
+                        status: 400,
+                        message: "Field `source` file is required for this post type.",
+                    });
+                }
+                newContent = null;
+            }
+
             await article.update({
                 title: title ?? article.title,
-                content: content ?? article.content,
+                post_type: newPostType,
+                content: newContent,
+                source: newSource,
                 image: imageAddres ?? article.image,
                 categoryId: categoryId ?? article.categoryId,
                 lang: lang ?? article.lang,
                 is_active: is_active ?? article.is_active,
             });
-
 
             return res.status(200).json({
                 status: 200,
@@ -189,7 +232,6 @@ class ArticleController {
 
             await article.destroy();
 
-
             return res.status(200).json({
                 status: 200,
                 message: "Article deleted successfully",
@@ -212,7 +254,6 @@ class ArticleController {
             }
 
             const updatedArticle = await article.increment("share_count", { by: 1 });
-
 
             return res.status(200).json({
                 status: 200,

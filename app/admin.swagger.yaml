@@ -3,7 +3,7 @@ info:
   title: Asar – Admin API
   version: 1.0.0
   description: >
-    This documentation contains admin-only endpoints for managing users, remote config logs, categories, articles, and other administrative tasks in the Asar Gold project.
+    This documentation contains admin-only endpoints for managing users, remote config logs, categories, articles, comments, and other administrative tasks in the Asar Gold project.
 
 servers:
   - url: http://localhost:1000/api/v1
@@ -20,6 +20,8 @@ tags:
     description: Endpoints for managing post categories (admin only)
   - name: articles
     description: Endpoints for managing articles (posts) (admin only)
+  - name: comments
+    description: Endpoints for managing comments (admin only)
   - name: remote-config
     description: Endpoints for managing remote config and device logs (admin only)
 
@@ -522,7 +524,10 @@ paths:
       tags:
         - articles
       summary: Create a new article
-      description: Allows an admin to create a new article.
+      description: >
+        Allows an admin to create a new article.
+        - If `post_type` is 'article', `content` is required.
+        - If `post_type` is 'audio', 'video', or 'poster', a `source` file is required.
       security:
         - bearerAuth: []
       requestBody:
@@ -533,8 +538,12 @@ paths:
               type: object
               required:
                 - title
-                - content
+                - post_type
               properties:
+                post_type:
+                  type: string
+                  enum: [article, audio, video, poster]
+                  example: "article"
                 title:
                   type: string
                   example: "تیتر مقاله"
@@ -544,6 +553,11 @@ paths:
                 image:
                   type: string
                   format: binary
+                  description: "Cover image for the article."
+                source:
+                  type: string
+                  format: binary
+                  description: "Media file (audio, video) - required if not 'article'."
                 categoryId:
                   type: string
                   format: uuid
@@ -561,7 +575,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ArticleResponse'
         "400":
-          description: Bad request – missing fields
+          description: Bad request – missing fields (e.g., missing content for article, or missing source for video)
         "401":
           description: Unauthorized
         "403":
@@ -665,6 +679,10 @@ paths:
             schema:
               type: object
               properties:
+                post_type:
+                  type: string
+                  enum: [article, audio, video, poster]
+                  example: "video"
                 title:
                   type: string
                   example: "تیتر به‌روز شده"
@@ -674,6 +692,11 @@ paths:
                 image:
                   type: string
                   format: binary
+                  description: "New cover image (optional)."
+                source:
+                  type: string
+                  format: binary
+                  description: "New media file (optional)."
                 categoryId:
                   type: string
                   format: uuid
@@ -735,6 +758,124 @@ paths:
           description: Forbidden
         "404":
           description: Article not found
+  /admin/comments:
+    get:
+      tags:
+        - comments
+      summary: Get all comments (admin)
+      description: Returns a paginated list of all comments. Filter by is_active=false to see pending comments.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: is_active
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter by approval status (e.g., false for pending).
+      responses:
+        "200":
+          description: A paginated list of comments.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListAdminResponse'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /admin/comments/{id}:
+    put:
+      tags:
+        - comments
+      summary: Update a comment (admin)
+      description: Allows an admin to approve, reject (by setting is_active), or edit a comment's content.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Comment ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  example: "متن ویرایش شده توسط ادمین."
+                is_active:
+                  type: boolean
+                  example: true
+      responses:
+        "200":
+          description: Comment updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentAdminResponse'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Comment not found
+    delete:
+      tags:
+        - comments
+      summary: Delete a comment (admin)
+      description: Permanently deletes a comment and its replies.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Comment ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Comment deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Comment and its replies deleted successfully."
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Comment not found
   /admin/remote_config/logs:
     get:
       tags:
@@ -888,15 +1029,24 @@ components:
           type: string
           format: uuid
           example: "e1f8a0d9-9cba-46cd-9ac0-b72a559f3a6f"
+        post_type:
+          type: string
+          enum: [article, audio, video, poster]
+          example: "article"
         title:
           type: string
           example: "تیتر مقاله"
         content:
           type: string
           example: "<p>متن <strong>HTML</strong>.</p>"
+          nullable: true
+        source:
+          type: string
+          example: "uploads/articles/media.mp4"
+          nullable: true
         image:
           type: string
-          example: "uploads/articles/image.png"
+          example: "uploads/articles/cover.png"
           nullable: true
         share_count:
           type: integer
@@ -953,6 +1103,68 @@ components:
         cached:
           type: boolean
           example: false
+    CommentAdmin:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        is_active:
+          type: boolean
+        userId:
+          type: string
+          format: uuid
+        articleId:
+          type: string
+          format: uuid
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            phone:
+              type: string
+        Article:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            title:
+              type: string
+    CommentAdminResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 200
+        data:
+          $ref: '#/components/schemas/CommentAdmin'
+    CommentListAdminResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 200
+        data:
+          type: object
+          properties:
+            comments:
+              type: array
+              items:
+                $ref: '#/components/schemas/CommentAdmin'
+            metadata:
+              $ref: '#/components/schemas/PaginationMetadata'
     RemoteConfigLog:
       type: object
       properties:

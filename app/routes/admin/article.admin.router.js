@@ -7,9 +7,14 @@ const articleAdminRouter = Router();
 
 articleAdminRouter.use(authorizeRequest, authorizeAdmin);
 
+const uploadFields = upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'source', maxCount: 1 }
+]);
+
 articleAdminRouter.route("/")
     .post(
-        upload.single("image"),
+        uploadFields,
         articleController.createArticle
     )
     .get(articleController.getAllArticles);
@@ -17,7 +22,7 @@ articleAdminRouter.route("/")
 articleAdminRouter.route("/:id")
     .get(articleController.getSingleArticle)
     .put(
-        upload.single("image"),
+        uploadFields,
         articleController.updateArticle
     )
     .delete(articleController.deleteArticle);

@@ -33,7 +33,8 @@ export class Notification extends Model {}
 export class UserDeviceLog extends Model {}
 export class Article extends Model {}
 export class PostCategory extends Model {}
-
+export class Comment extends Model {}
+export class CommentLike extends Model {}
 PostCategory.init(
     {
         id: {
@@ -84,13 +85,22 @@ Article.init(
             defaultValue: Sequelize.UUIDV4,
             primaryKey: true,
         },
+        post_type: {
+            type: DataTypes.ENUM("article", "audio", "video", "poster"),
+            allowNull: false,
+            defaultValue: "article",
+        },
         title: {
             type: DataTypes.STRING,
             allowNull: false,
         },
         content: {
             type: DataTypes.TEXT,
-            allowNull: false,
+            allowNull: true,
+        },
+        source: {
+            type: DataTypes.STRING,
+            allowNull: true,
         },
         image: {
             type: DataTypes.STRING,
@@ -323,7 +333,94 @@ OtpCode.init(
     },
     { sequelize, timestamps: true }
 )
+Comment.init(
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true,
+        },
+        content: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+        },
+        userId: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            references: {
+                model: User,
+                key: 'id'
+            }
+        },
+        articleId: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            references: {
+                model: Article,
+                key: 'id'
+            }
+        },
+        parentId: {
+            type: DataTypes.UUID,
+            allowNull: true,
+            references: {
+                model: 'comments',
+                key: 'id'
+            }
+        }
+    },
+    {
+        sequelize,
+        modelName: "Comment",
+        tableName: "comments",
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: "updated_at",
+    }
+);
 
+CommentLike.init(
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true,
+        },
+        status: {
+            type: DataTypes.ENUM("like", "dislike"),
+            allowNull: false,
+        },
+        userId: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            references: {
+                model: User,
+                key: 'id'
+            }
+        },
+        commentId: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            references: {
+                model: Comment,
+                key: 'id'
+            }
+        }
+    },
+    {
+        sequelize,
+        modelName: "CommentLike",
+        tableName: "comment_likes",
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: false,
+    }
+);
 User.hasMany(Notification, {
         foreignKey: "target_user_id",
         as: "Notifications",
@@ -348,3 +445,17 @@ PostCategory.hasMany(PostCategory, { as: 'children', foreignKey: 'parentId' })
 PostCategory.belongsTo(PostCategory, { as: 'parent', foreignKey: 'parentId' })
 Article.belongsTo(PostCategory, { foreignKey: 'categoryId', as: 'category' })
 PostCategory.hasMany(Article, { foreignKey: 'categoryId', as: 'articles' })
+Comment.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(Comment, { foreignKey: 'userId' });
+
+Comment.belongsTo(Article, { foreignKey: 'articleId' });
+Article.hasMany(Comment, { foreignKey: 'articleId' });
+
+Comment.hasMany(Comment, { as: 'replies', foreignKey: 'parentId' });
+Comment.belongsTo(Comment, { as: 'parent', foreignKey: 'parentId' });
+
+Comment.hasMany(CommentLike, { foreignKey: 'commentId', as: 'likes' });
+CommentLike.belongsTo(Comment, { foreignKey: 'commentId' });
+
+User.hasMany(CommentLike, { foreignKey: 'userId' });
+CommentLike.belongsTo(User, { foreignKey: 'userId' });
