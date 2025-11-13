@@ -14,6 +14,6 @@ articleLikeApiRouter.route("/:id")
     .post(multer().none(), articleLikeController.toggleLike);
 
 articleLikeApiRouter.route("/:id/status")
-    .get(articleLikeTwoController.getArticleLikeStatus);
+    .get(articleLikeController.getArticleLikeStatus);
 
 export { articleLikeApiRouter };
