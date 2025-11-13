@@ -1,7 +1,7 @@
 import { Article, PostCategory, ArticleLike, ArticleBookmark, Comment } from "../../database/postgres_sequelize.js";
 import { generatePaginationInfo } from "../../utils/functions.js";
 import { getFileAddress } from "../../utils/multer.config.js";
-import { Sequelize } from "sequelize";
+import { Sequelize, Op } from "sequelize";
 
 class ArticleController {
     async createArticle(req, res, next) {
@@ -174,6 +174,62 @@ class ArticleController {
                 status: 200,
                 data: { article: articleData },
             });
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async searchArticles(req, res, next) {
+        try {
+            const { q, categoryId, post_type, lang } = req.query;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const offset = (page - 1) * limit;
+
+            let whereClause = {
+                is_active: true,
+                lang: lang || "fa",
+            };
+
+            if (categoryId) {
+                whereClause.categoryId = categoryId;
+            }
+
+            if (post_type) {
+                whereClause.post_type = post_type;
+            }
+
+            if (q && q.trim() !== "") {
+                const searchQuery = `%${q.trim()}%`;
+                whereClause[Op.or] = [
+                    { title: { [Op.like]: searchQuery } },
+                    { content: { [Op.like]: searchQuery } }
+                ];
+            }
+
+            const { count, rows } = await Article.findAndCountAll({
+                where: whereClause,
+                include: [{
+                    model: PostCategory,
+                    as: 'category',
+                    attributes: ['id', 'name', 'image']
+                }],
+                order: [["created_at", "DESC"]],
+                limit,
+                offset,
+                distinct: true
+            });
+
+            const metadata = generatePaginationInfo(count, limit, page);
+
+            return res.status(200).json({
+                status: 200,
+                data: {
+                    articles: rows,
+                    metadata
+                },
+            });
+
         } catch (e) {
             next(e);
         }

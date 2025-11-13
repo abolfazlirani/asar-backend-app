@@ -205,12 +205,73 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ArticleListApiResponse'
+  /articles/search:
+    get:
+      tags:
+        - articles
+      summary: Search for articles
+      description: Returns a paginated list of articles based on search criteria.
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search query for title and content.
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter by category ID.
+        - name: post_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [article, audio, video, poster]
+          description: Filter by post type.
+        - name: lang
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "fa"
+            default: "fa"
+          description: Filter by language.
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Items per page.
+      responses:
+        "200":
+          description: A paginated list of matching articles.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleListApiResponse'
   /articles/{id}:
     get:
       tags:
         - articles
       summary: Get single article
-      description: Returns details for a specific article.
+      description: Returns details for a specific article, including user-specific like/bookmark status if authenticated.
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -752,6 +813,26 @@ components:
           example: "2025-11-11T10:00:00.000Z"
         category:
           $ref: '#/components/schemas/PostCategory'
+    ArticleWithStats:
+      allOf:
+        - $ref: '#/components/schemas/Article'
+        - type: object
+          properties:
+            likes_count:
+              type: integer
+              example: 12
+            bookmarks_count:
+              type: integer
+              example: 5
+            comments_count:
+              type: integer
+              example: 3
+            is_liked:
+              type: boolean
+              example: true
+            is_bookmarked:
+              type: boolean
+              example: false
     ArticleApiResponse:
       type: object
       properties:
@@ -762,7 +843,7 @@ components:
           type: object
           properties:
             article:
-              $ref: '#/components/schemas/Article'
+              $ref: '#/components/schemas/ArticleWithStats'
         cached:
           type: boolean
           example: false
@@ -829,6 +910,12 @@ components:
         created_at:
           type: string
           format: date-time
+        likes_count:
+          type: integer
+          example: 10
+        dislikes_count:
+          type: integer
+          example: 1
         userLikeStatus:
           type: string
           enum: [like, dislike, none]

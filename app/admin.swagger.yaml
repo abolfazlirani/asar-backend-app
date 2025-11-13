@@ -1365,7 +1365,7 @@ components:
           type: boolean
           example: true
         has_prev_page:
-          type: boolean
+          type: booleansss
           example: false
     RemoteConfigLogsResponse:
       type: object
