@@ -35,6 +35,8 @@ export class Article extends Model {}
 export class PostCategory extends Model {}
 export class Comment extends Model {}
 export class CommentLike extends Model {}
+export class ArticleBookmark extends Model {}
+export class ArticleLike extends Model {}
 PostCategory.init(
     {
         id: {
@@ -421,6 +423,72 @@ CommentLike.init(
         updatedAt: false,
     }
 );
+ArticleLike.init(
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true,
+        },
+        userId: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            references: {
+                model: User,
+                key: 'id'
+            }
+        },
+        articleId: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            references: {
+                model: Article,
+                key: 'id'
+            }
+        }
+    },
+    {
+        sequelize,
+        modelName: "ArticleLike",
+        tableName: "article_likes",
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: false,
+    }
+);
+ArticleBookmark.init(
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true,
+        },
+        userId: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            references: {
+                model: User,
+                key: 'id'
+            }
+        },
+        articleId: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            references: {
+                model: Article,
+                key: 'id'
+            }
+        }
+    },
+    {
+        sequelize,
+        modelName: "ArticleBookmark",
+        tableName: "article_bookmarks",
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: false,
+    }
+);
 User.hasMany(Notification, {
         foreignKey: "target_user_id",
         as: "Notifications",
@@ -459,3 +527,13 @@ CommentLike.belongsTo(Comment, { foreignKey: 'commentId' });
 
 User.hasMany(CommentLike, { foreignKey: 'userId' });
 CommentLike.belongsTo(User, { foreignKey: 'userId' });
+ArticleBookmark.belongsTo(User, { foreignKey: 'userId' });
+User.hasMany(ArticleBookmark, { foreignKey: 'userId', as: 'articleBookmarks' });
+
+ArticleBookmark.belongsTo(Article, { foreignKey: 'articleId' });
+Article.hasMany(ArticleBookmark, { foreignKey: 'articleId', as: 'bookmarks' });
+ArticleLike.belongsTo(User, { foreignKey: 'userId' });
+User.hasMany(ArticleLike, { foreignKey: 'userId', as: 'articleLikes' });
+
+ArticleLike.belongsTo(Article, { foreignKey: 'articleId' });
+Article.hasMany(ArticleLike, { foreignKey: 'articleId', as: 'likes' });
