@@ -1,7 +1,7 @@
-import { Article, PostCategory } from "../../database/postgres_sequelize.js";
+import { Article, PostCategory, ArticleLike, ArticleBookmark, Comment } from "../../database/postgres_sequelize.js";
 import { generatePaginationInfo } from "../../utils/functions.js";
 import { getFileAddress } from "../../utils/multer.config.js";
-import { Sequelize } from "sequelize";
+import { Sequelize, Op } from "sequelize";
 
 class ArticleController {
     async createArticle(req, res, next) {
@@ -119,6 +119,26 @@ class ArticleController {
     async getSingleArticle(req, res, next) {
         try {
             const { id } = req.params;
+            const userId = req.user?.id;
+
+            const staticCounts = [
+                [Sequelize.literal('(SELECT COUNT(*) FROM `article_likes` WHERE `article_likes`.`articleId` = `Article`.`id`)'), 'likes_count'],
+                [Sequelize.literal('(SELECT COUNT(*) FROM `article_bookmarks` WHERE `article_bookmarks`.`articleId` = `Article`.`id`)'), 'bookmarks_count'],
+                [Sequelize.literal('(SELECT COUNT(*) FROM `comments` WHERE `comments`.`articleId` = `Article`.`id` AND `comments`.`is_active` = true)'), 'comments_count']
+            ];
+
+            let userAttributes = [];
+            if (userId) {
+                userAttributes = [
+                    [Sequelize.literal(`(EXISTS(SELECT 1 FROM \`article_likes\` WHERE \`article_likes\`.\`articleId\` = \`Article\`.\`id\` AND \`article_likes\`.\`userId\` = '${userId}'))`), 'is_liked'],
+                    [Sequelize.literal(`(EXISTS(SELECT 1 FROM \`article_bookmarks\` WHERE \`article_bookmarks\`.\`articleId\` = \`Article\`.\`id\` AND \`article_bookmarks\`.\`userId\` = '${userId}'))`), 'is_bookmarked']
+                ];
+            } else {
+                userAttributes = [
+                    [Sequelize.literal(false), 'is_liked'],
+                    [Sequelize.literal(false), 'is_bookmarked']
+                ];
+            }
 
             const article = await Article.findOne({
                 where: {
@@ -130,6 +150,13 @@ class ArticleController {
                     as: 'category',
                     attributes: ['id', 'name', 'image']
                 }],
+                attributes: {
+                    exclude: ['updatedAt'],
+                    include: [
+                        ...staticCounts,
+                        ...userAttributes
+                    ]
+                }
             });
 
             if (!article) {
@@ -139,10 +166,70 @@ class ArticleController {
                 });
             }
 
+            const articleData = article.toJSON();
+            articleData.is_liked = !!articleData.is_liked;
+            articleData.is_bookmarked = !!articleData.is_bookmarked;
+
             return res.status(200).json({
                 status: 200,
-                data: { article },
+                data: { article: articleData },
             });
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async searchArticles(req, res, next) {
+        try {
+            const { q, categoryId, post_type, lang } = req.query;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const offset = (page - 1) * limit;
+
+            let whereClause = {
+                is_active: true,
+                lang: lang || "fa",
+            };
+
+            if (categoryId) {
+                whereClause.categoryId = categoryId;
+            }
+
+            if (post_type) {
+                whereClause.post_type = post_type;
+            }
+
+            if (q && q.trim() !== "") {
+                const searchQuery = `%${q.trim()}%`;
+                whereClause[Op.or] = [
+                    { title: { [Op.like]: searchQuery } },
+                    { content: { [Op.like]: searchQuery } }
+                ];
+            }
+
+            const { count, rows } = await Article.findAndCountAll({
+                where: whereClause,
+                include: [{
+                    model: PostCategory,
+                    as: 'category',
+                    attributes: ['id', 'name', 'image']
+                }],
+                order: [["created_at", "DESC"]],
+                limit,
+                offset,
+                distinct: true
+            });
+
+            const metadata = generatePaginationInfo(count, limit, page);
+
+            return res.status(200).json({
+                status: 200,
+                data: {
+                    articles: rows,
+                    metadata
+                },
+            });
+
         } catch (e) {
             next(e);
         }
@@ -188,7 +275,7 @@ class ArticleController {
                 }
                 newSource = null;
             } else {
-                if (!newSource) {
+                if (!newSource && !article.source) {
                     return res.status(400).json({
                         status: 400,
                         message: "Field `source` file is required for this post type.",
