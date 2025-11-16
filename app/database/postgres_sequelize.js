@@ -6,13 +6,13 @@ dotenv.config()
 
 console.log("connecting to db")
 export const sequelize = new Sequelize(process.env.DATABASE_URL, {
-        logging: false,
-        dialect: "mysql",
+    logging: false,
+    dialect: "mysql",
 })
 
 const _userRol = Object.freeze({
-        admin: "admin",
-        user: "user",
+    admin: "admin",
+    user: "user",
 })
 
 export async function initializeConnectionToPG() {
@@ -37,6 +37,7 @@ export class Comment extends Model {}
 export class CommentLike extends Model {}
 export class ArticleBookmark extends Model {}
 export class ArticleLike extends Model {}
+export class Page extends Model {}
 PostCategory.init(
     {
         id: {
@@ -141,137 +142,182 @@ Article.init(
         updatedAt: "updated_at",
     }
 )
-User.init(
+Page.init(
     {
-            id: {
-                    type: DataTypes.UUID,
-                    defaultValue: Sequelize.UUIDV4,
-                    primaryKey: true,
-            },
-            firstname: {
-                    type: DataTypes.STRING,
-
-                    allowNull: true,defaultValue:""
-            },
-            lastname: {
-                    type: DataTypes.STRING,
-                    allowNull: true,defaultValue:""
-            },
-            national_code: {
-                    type: DataTypes.STRING,
-                    allowNull: true,
-                    unique: true,defaultValue:""
-            },
-            birthday: {
-                    type: DataTypes.DATEONLY,
-                    allowNull: true,
-            },
-            phone: {
-                    type: DataTypes.STRING,
-                    allowNull: false,
-            },
-            email: {
-                    type: DataTypes.STRING,
-                    allowNull: true,defaultValue:""
-            },
-            gender: {
-                    type: DataTypes.STRING,
-                    allowNull: true,defaultValue:""
-            },
-            education: {
-                    type: DataTypes.STRING,
-                    allowNull: true,defaultValue:""
-            },
-            document_image: {
-                    type: DataTypes.STRING,
-                    allowNull: true,
-            },
-            password: {
-                    type: DataTypes.STRING,
-                    allowNull: true,
-            },
-            fcm_token: {
-                    type: DataTypes.STRING,
-                    allowNull: true,
-            },
-            profile_pic: {
-                    type: DataTypes.STRING,
-                    allowNull: true,
-            },
-            role: {
-                    type: DataTypes.ENUM("admin", "user"),
-                    defaultValue: "user",
-            },
-            roled_by: {
-                    type: DataTypes.UUID,
-                    allowNull: true,
-            },
-            is_active: {
-                    type: DataTypes.BOOLEAN,
-                    allowNull: false,
-                    defaultValue: true,
-            },
-            blocked: {
-                    type: DataTypes.BOOLEAN,
-                    allowNull: false,
-                    defaultValue: false,
-            },
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true,
+        },
+        slug: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        language: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: "fa",
+        },
+        title: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        layout_json: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
+        },
     },
     {
-            sequelize,
-            modelName: "User",
-            tableName: "users",
-            timestamps: true,
-            createdAt: "created_at",
-            updatedAt: false,
+        sequelize,
+        modelName: "Page",
+        tableName: "pages",
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: "updated_at",
+        indexes: [
+            {
+                unique: true,
+                fields: ['slug', 'language']
+            }
+        ]
+    }
+)
+User.init(
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true,
+        },
+        firstname: {
+            type: DataTypes.STRING,
+
+            allowNull: true,defaultValue:""
+        },
+        lastname: {
+            type: DataTypes.STRING,
+            allowNull: true,defaultValue:""
+        },
+        national_code: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            unique: true,defaultValue:""
+        },
+        birthday: {
+            type: DataTypes.DATEONLY,
+            allowNull: true,
+        },
+        phone: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        email: {
+            type: DataTypes.STRING,
+            allowNull: true,defaultValue:""
+        },
+        gender: {
+            type: DataTypes.STRING,
+            allowNull: true,defaultValue:""
+        },
+        education: {
+            type: DataTypes.STRING,
+            allowNull: true,defaultValue:""
+        },
+        document_image: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        password: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        fcm_token: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        profile_pic: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        role: {
+            type: DataTypes.ENUM("admin", "user"),
+            defaultValue: "user",
+        },
+        roled_by: {
+            type: DataTypes.UUID,
+            allowNull: true,
+        },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
+        },
+        blocked: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+        },
+    },
+    {
+        sequelize,
+        modelName: "User",
+        tableName: "users",
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: false,
     }
 )
 
 Notification.init(
     {
-            id: {
-                    type: Sequelize.UUID,
-                    defaultValue: Sequelize.UUIDV4,
-                    primaryKey: true,
+        id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true,
+        },
+        blurHash: {
+            type: DataTypes.STRING,
+        },
+        title: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        description: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
+        image: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        link: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        type: {
+            type: DataTypes.ENUM("public", "private"),
+            allowNull: false,
+            defaultValue: "public",
+        },
+        target_user_id: {
+            type: Sequelize.UUID,
+            allowNull: true,
+            references: {
+                model: User,
+                key: "id",
             },
-            blurHash: {
-                    type: DataTypes.STRING,
-            },
-            title: {
-                    type: DataTypes.STRING,
-                    allowNull: false,
-            },
-            description: {
-                    type: DataTypes.TEXT,
-                    allowNull: false,
-            },
-            image: {
-                    type: DataTypes.STRING,
-                    allowNull: true,
-            },
-            link: {
-                    type: DataTypes.STRING,
-                    allowNull: false,
-            },
-            type: {
-                    type: DataTypes.ENUM("public", "private"),
-                    allowNull: false,
-                    defaultValue: "public",
-            },
-            target_user_id: {
-                    type: Sequelize.UUID,
-                    allowNull: true,
-                    references: {
-                            model: User,
-                            key: "id",
-                    },
-            },
+        },
     },
     {
-            sequelize,
-            modelName: "Notification",
-            tableName: "notifications",
-            timestamps: true,
+        sequelize,
+        modelName: "Notification",
+        tableName: "notifications",
+        timestamps: true,
     }
 )
 UserDeviceLog.init(
@@ -325,13 +371,13 @@ UserDeviceLog.init(
 )
 OtpCode.init(
     {
-            id: {
-                    type: Sequelize.UUID,
-                    defaultValue: Sequelize.UUIDV4,
-                    primaryKey: true,
-            },
-            code: { type: DataTypes.STRING, allowNull: false },
-            phone: { type: DataTypes.STRING, allowNull: false },
+        id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true,
+        },
+        code: { type: DataTypes.STRING, allowNull: false },
+        phone: { type: DataTypes.STRING, allowNull: false },
     },
     { sequelize, timestamps: true }
 )
@@ -490,13 +536,13 @@ ArticleBookmark.init(
     }
 );
 User.hasMany(Notification, {
-        foreignKey: "target_user_id",
-        as: "Notifications",
+    foreignKey: "target_user_id",
+    as: "Notifications",
 })
 
 Notification.belongsTo(User, {
-        foreignKey: "target_user_id",
-        as: "TargetUser",
+    foreignKey: "target_user_id",
+    as: "TargetUser",
 })
 User.hasMany(UserDeviceLog, {
     foreignKey: "user_id",

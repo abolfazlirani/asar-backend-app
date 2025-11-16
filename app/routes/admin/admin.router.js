@@ -6,6 +6,7 @@ import { articleAdminRouter } from "./article.admin.router.js";
 import { commentAdminRouter } from "./comment.admin.router.js";
 import { articleBookmarkAdminRouter } from "./article.bookmark.admin.router.js";
 import { articleLikeAdminRouter } from "./article.like.admin.router.js";
+import { pageAdminRouter } from "./page.admin.router.js";
 
 const adminRouter = Router();
 
@@ -16,6 +17,7 @@ adminRouter.use("/articles", articleAdminRouter);
 adminRouter.use("/comments", commentAdminRouter);
 adminRouter.use("/article_bookmarks", articleBookmarkAdminRouter);
 adminRouter.use("/article_likes", articleLikeAdminRouter);
+adminRouter.use("/pages", pageAdminRouter);
 
 export {
     adminRouter

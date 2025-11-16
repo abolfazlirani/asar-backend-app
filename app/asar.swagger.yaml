@@ -13,6 +13,8 @@ servers:
 tags:
   - name: auth
     description: Authentication via OTP
+  - name: pages
+    description: Retrieving dynamic page layouts
   - name: categories
     description: Endpoints for retrieving post categories
   - name: articles
@@ -132,6 +134,37 @@ paths:
                   message:
                     type: string
                     example: "Invalid code or phone number"
+  /pages/{slug}:
+    get:
+      tags:
+        - pages
+      summary: Get resolved page by slug
+      description: Returns the fully resolved JSON layout for a page (e.g., "home") based on its slug and language.
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: The unique slug of the page (e.g., "home").
+          schema:
+            type: string
+            example: "home"
+        - name: lang
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "fa"
+            default: "fa"
+          description: Filter by language.
+      responses:
+        "200":
+          description: Page layout retrieved and resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageApiResponse'
+        "404":
+          description: Page not found
   /categories:
     get:
       tags:
@@ -553,6 +586,86 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    PageItem:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "e1f8a0d9-9cba-46cd-9ac0-b72a559f3a6f"
+        title:
+          type: string
+          example: "تیتر آیتم"
+        subtitle:
+          type: string
+          example: "زیرتیتر"
+          nullable: true
+        imageUrl:
+          type: string
+          example: "uploads/articles/cover.png"
+          nullable: true
+        link:
+          type: string
+          example: "asar://matna.app?source=post&id=e1f8a0d9-9cba-46cd-9ac0-b72a559f3a6f"
+        badgeText:
+          type: string
+          nullable: true
+        meta:
+          type: object
+          nullable: true
+    PageRow:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "row-123"
+        type:
+          type: string
+          example: "hero"
+        title:
+          type: string
+          example: "عنوان ردیف"
+          nullable: true
+        subtitle:
+          type: string
+          nullable: true
+        columns:
+          type: integer
+          example: 2
+          nullable: true
+        backgroundColor:
+          type: string
+          example: "#FFFFFF"
+          nullable: true
+        textColor:
+          type: string
+          example: "#000000"
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PageItem'
+    PageApiResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 200
+        data:
+          type: object
+          properties:
+            slug:
+              type: string
+              example: "home"
+            language:
+              type: string
+              example: "fa"
+            title:
+              type: string
+              example: "Home"
+            rows:
+              type: array
+              items:
+                $ref: '#/components/schemas/PageRow'
     PostCategory:
       type: object
       properties:
