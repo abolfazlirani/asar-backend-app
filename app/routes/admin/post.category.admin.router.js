@@ -7,6 +7,9 @@ const postCategoryAdminRouter = Router();
 
 postCategoryAdminRouter.use(authorizeRequest, authorizeAdmin);
 
+postCategoryAdminRouter.route("/all")
+    .get(postCategoryController.getAllCategoriesAdmin);
+
 postCategoryAdminRouter.route("/")
     .post(
         upload.single("image"),

@@ -1,20 +1,15 @@
 import { PostCategory } from "../../database/postgres_sequelize.js";
 import { generatePaginationInfo } from "../../utils/functions.js";
 import { Sequelize } from "sequelize";
-import {getFileAddress} from "../../utils/multer.config.js";
+import { getFileAddress } from "../../utils/multer.config.js";
 
 class PostCategoryController {
 
-    /**
-     * @desc    Create a new category (Admin)
-     * @route   POST /api/admin/categories
-     * @access  Private (Admin)
-     */
     async createCategory(req, res, next) {
         try {
-            const { name, image, parentId, lang } = req.body;
-
+            const { name, parentId, lang } = req.body;
             var imageAddres = getFileAddress(req);
+
             if (!name) {
                 return res.status(400).json({
                     status: 400,
@@ -40,15 +35,11 @@ class PostCategoryController {
         }
     }
 
-    /**
-     * @desc    Update a category (Admin)
-     * @route   PUT /api/admin/categories/:id
-     * @access  Private (Admin)
-     */
     async updateCategory(req, res, next) {
         try {
             const { id } = req.params;
-            const { name, image, parentId, lang, is_active } = req.body;
+            const { name, parentId, lang, is_active } = req.body;
+            const imageAddres = getFileAddress(req);
 
             const category = await PostCategory.findByPk(id);
             if (!category) {
@@ -58,7 +49,6 @@ class PostCategoryController {
                 });
             }
 
-            // اگر parentId فرستاده شده بود، چک می‌کنیم که خود دسته‌بندی نباشد
             if (parentId && parentId === id) {
                 return res.status(400).json({
                     status: 400,
@@ -68,7 +58,7 @@ class PostCategoryController {
 
             await category.update({
                 name: name ?? category.name,
-                image: image ?? category.image,
+                image: imageAddres ?? category.image,
                 parentId: parentId ?? category.parentId,
                 lang: lang ?? category.lang,
                 is_active: is_active ?? category.is_active,
@@ -85,11 +75,6 @@ class PostCategoryController {
         }
     }
 
-    /**
-     * @desc    Delete a category (Admin)
-     * @route   DELETE /api/admin/categories/:id
-     * @access  Private (Admin)
-     */
     async deleteCategory(req, res, next) {
         try {
             const { id } = req.params;
@@ -102,7 +87,6 @@ class PostCategoryController {
                 });
             }
 
-            // اطمینان از اینکه دسته‌بندی فرزند یا پستی نداشته باشد (اختیاری)
             const childrenCount = await PostCategory.count({ where: { parentId: id } });
             if (childrenCount > 0) {
                 return res.status(400).json({
@@ -110,11 +94,6 @@ class PostCategoryController {
                     message: "Cannot delete category, it has sub-categories.",
                 });
             }
-
-            // (همچنین می‌توانی چک کنی که پستی به این دسته بندی متصل نباشد)
-            // const postCount = await Post.count({ where: { categoryId: id } });
-            // if (postCount > 0) { ... }
-
 
             await category.destroy();
 
@@ -128,20 +107,10 @@ class PostCategoryController {
         }
     }
 
-    /**
-     * @desc    Get all categories with children (Admin/User)
-     * @route   GET /api/categories
-     * @access  Public
-     */
     async getCategories(req, res, next) {
         try {
             const lang = req.query.lang || "fa";
-
-
             const parentId = req.query.parentId || null;
-
-            const cacheKey = `categories:all:lang:${lang}:parent:${parentId || 'root'}`;
-
 
             const whereClause = {
                 lang,
@@ -149,10 +118,44 @@ class PostCategoryController {
                 parentId: parentId,
             };
 
+            const includeChildren = {
+                model: PostCategory,
+                as: 'children',
+                required: false,
+                include: []
+            };
+
+            const level3 = JSON.parse(JSON.stringify(includeChildren));
+            const level2 = JSON.parse(JSON.stringify(includeChildren));
+            level2.include = [level3];
+            const level1 = JSON.parse(JSON.stringify(includeChildren));
+            level1.include = [level2];
+
+
             const categories = await PostCategory.findAll({
                 where: whereClause,
                 order: [["name", "ASC"]],
-
+                include: [
+                    {
+                        model: PostCategory,
+                        as: 'children',
+                        required: false,
+                        include: [
+                            {
+                                model: PostCategory,
+                                as: 'children',
+                                required: false,
+                                include: [
+                                    {
+                                        model: PostCategory,
+                                        as: 'children',
+                                        required: false,
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
             });
 
             const responseData = { categories };
@@ -160,7 +163,30 @@ class PostCategoryController {
             return res.status(200).json({
                 status: 200,
                 data: responseData,
-                cached: false,
+            });
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getAllCategoriesAdmin(req, res, next) {
+        try {
+            const lang = req.query.lang || "fa";
+
+            const whereClause = {
+                lang,
+            };
+
+            const categories = await PostCategory.findAll({
+                where: whereClause,
+                order: [["name", "ASC"]],
+            });
+
+            const responseData = { categories };
+
+            return res.status(200).json({
+                status: 200,
+                data: responseData,
             });
         } catch (e) {
             next(e);

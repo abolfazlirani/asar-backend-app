@@ -35,7 +35,12 @@ export class Application {
         let static_path = join(__dirname, "..", "public")
         console.log(static_path)
         this.#app.use(express.static(static_path))
-        this.#app.use(cors())
+        this.#app.use(cors({
+            origin: "*",
+            methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+            allowedHeaders: ["Content-Type", "Authorization", "Accept"]
+        }))
+        this.#app.options("*", cors())
 
         let swaggerFilePath = join(__dirname, "asar.swagger.yaml")
         let swaggerDocument = YAML.load(swaggerFilePath)

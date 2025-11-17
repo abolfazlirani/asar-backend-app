@@ -12,7 +12,6 @@ class UserController {
                 });
             }
 
-
             const user = await User.create({
                 firstname,
                 lastname,
@@ -30,6 +29,8 @@ class UserController {
                     lastname: user.lastname,
                     phone: user.phone,
                     role: user.role,
+                    is_active: user.is_active,
+                    national_code: user.national_code,
                     createdAt: user.created_at,
                 },
             });
@@ -41,7 +42,7 @@ class UserController {
     async getAllUsers(req, res, next) {
         try {
             const users = await User.findAll({
-                attributes: ["id", "firstname", "lastname", "phone", "role", "created_at"],
+                attributes: ["id", "firstname", "lastname", "phone", "role", "created_at", "is_active", "national_code"],
                 order: [["created_at", "DESC"]],
             });
 
@@ -54,7 +55,7 @@ class UserController {
     async updateUser(req, res, next) {
         try {
             const { id } = req.params;
-            const { firstname, lastname, phone, national_code, role } = req.body;
+            const { firstname, lastname, phone, national_code, role, is_active } = req.body;
 
             const user = await User.findByPk(id);
             if (!user) {
@@ -67,6 +68,7 @@ class UserController {
                 phone: phone ?? user.phone,
                 national_code: national_code ?? user.national_code,
                 role: role ?? user.role,
+                is_active: is_active ?? user.is_active,
             });
 
             return res.status(200).json({
@@ -77,6 +79,8 @@ class UserController {
                     lastname: user.lastname,
                     phone: user.phone,
                     role: user.role,
+                    is_active: user.is_active,
+                    national_code: user.national_code,
                 },
             });
         } catch (error) {

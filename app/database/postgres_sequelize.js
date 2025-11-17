@@ -206,7 +206,7 @@ User.init(
         national_code: {
             type: DataTypes.STRING,
             allowNull: true,
-            unique: true,defaultValue:""
+            unique: true,
         },
         birthday: {
             type: DataTypes.DATEONLY,
