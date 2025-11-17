@@ -38,8 +38,14 @@ export class Application {
         this.#app.use(cors({
             origin: "*",
             methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-            allowedHeaders: ["Content-Type", "Authorization", "Accept"]
+            allowedHeaders: [
+                "Content-Type",
+                "Authorization",
+                "Accept",
+                "X-Public-Upload"
+            ]
         }))
+
         this.#app.options("*", cors())
 
         let swaggerFilePath = join(__dirname, "asar.swagger.yaml")

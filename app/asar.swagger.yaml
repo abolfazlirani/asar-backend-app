@@ -25,6 +25,8 @@ tags:
     description: Endpoints for managing article bookmarks
   - name: likes
     description: Endpoints for managing article likes
+  - name: File Upload
+    description: Endpoints for file management
   - name: remote_config
     description: Remote Configuration
 
@@ -136,6 +138,59 @@ paths:
                   message:
                     type: string
                     example: "Invalid code or phone number"
+  /file:
+    post:
+      tags:
+        - File Upload
+      summary: Upload a public file
+      description: >
+        Uploads a file (image, video, audio, pdf) to the public storage.
+        Requires a valid Bearer token and the X-Public-Upload key.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: X-Public-Upload
+          in: header
+          required: true
+          schema:
+            type: string
+          description: "A secret key required for public uploads."
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "The file to upload."
+      responses:
+        "201":
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "information updated"
+                  result:
+                    type: object
+                    properties:
+                      fileAddr:
+                        type: string
+                        example: "https://your-storage.com/uploads/file.png"
+        "400":
+          description: Bad Request (e.g., file not provided, invalid file type)
+        "401":
+          description: Unauthorized (Invalid or missing token)
+        "403":
+          description: Forbidden (Invalid X-Public-Upload key)
   /pages/{slug}:
     get:
       tags:

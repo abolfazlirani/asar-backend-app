@@ -1,4 +1,4 @@
-import { Article, PostCategory, ArticleLike, ArticleBookmark, Comment } from "../../database/postgres_sequelize.js";
+import { Article, PostCategory, ArticleLike, ArticleBookmark, Comment, CommentLike } from "../../database/postgres_sequelize.js";
 import { generatePaginationInfo } from "../../utils/functions.js";
 import { getFileAddress } from "../../utils/multer.config.js";
 import { Sequelize, Op } from "sequelize";
@@ -317,11 +317,27 @@ class ArticleController {
                 });
             }
 
+            const comments = await Comment.findAll({
+                where: { articleId: id },
+                attributes: ['id']
+            });
+            const commentIds = comments.map(c => c.id);
+
+            if (commentIds.length > 0) {
+                await CommentLike.destroy({ where: { commentId: { [Op.in]: commentIds } } });
+
+                await Comment.destroy({ where: { parentId: { [Op.in]: commentIds } } });
+                await Comment.destroy({ where: { id: { [Op.in]: commentIds } } });
+            }
+
+            await ArticleBookmark.destroy({ where: { articleId: id } });
+            await ArticleLike.destroy({ where: { articleId: id } });
+
             await article.destroy();
 
             return res.status(200).json({
                 status: 200,
-                message: "Article deleted successfully",
+                message: "Article and all related data deleted successfully",
             });
         } catch (e) {
             next(e);
