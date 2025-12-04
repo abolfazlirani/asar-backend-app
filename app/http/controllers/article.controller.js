@@ -55,7 +55,7 @@ class ArticleController {
             const article = await Article.create({
                 title,
                 post_type,
-                content: post_type === "article" ? content : null,
+                content: content,
                 source: post_type !== "article" ? sourceAddress : null,
                 image: imageAddres,
                 categoryId: categoryId || null,
