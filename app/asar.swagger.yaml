@@ -7,7 +7,7 @@ info:
 servers:
   - url: http://localhost:1000/api/v1
     description: Local Development
-  - url: https://api.asarmulticenter.ir/api/v1
+  - url: https://asarmulticenter.ir/app/api/v1
     description: Production
 
 tags:
@@ -418,6 +418,45 @@ paths:
                         example: 1
         "404":
           description: Article not found
+  /articles/new:
+    get:
+      tags:
+        - articles
+      summary: Get recently published articles
+      description: Returns a paginated list of articles ordered by creation date (newest first), including category information.
+      parameters:
+        - name: lang
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "fa"
+            default: "fa"
+          description: Filter by language.
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Items per page.
+      responses:
+        "200":
+          description: List of articles retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleListApiResponse'
   /comments:
     post:
       tags:

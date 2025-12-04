@@ -116,6 +116,45 @@ class ArticleController {
         }
     }
 
+    async getNewArticles(req, res, next) {
+        try {
+            const lang = req.query.lang || "fa";
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const offset = (page - 1) * limit;
+
+            let whereClause = {
+                lang,
+                is_active: true,
+            };
+
+            const { count, rows } = await Article.findAndCountAll({
+                where: whereClause,
+                include: [{
+                    model: PostCategory,
+                    as: 'category',
+                    attributes: ['id', 'name', 'image']
+                }],
+                order: [["created_at", "DESC"]],
+                limit,
+                offset,
+            });
+
+            const metadata = generatePaginationInfo(count, limit, page);
+            const responseData = {
+                articles: rows,
+                metadata,
+            };
+
+            return res.status(200).json({
+                status: 200,
+                data: responseData,
+            });
+        } catch (e) {
+            next(e);
+        }
+    }
+
     async getSingleArticle(req, res, next) {
         try {
             const { id } = req.params;

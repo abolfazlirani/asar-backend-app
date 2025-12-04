@@ -5,6 +5,9 @@ import { authorizeAdmin, authorizeRequest } from "../../http/middlewares/auth.mi
 
 const articleApiRouter = Router();
 
+articleApiRouter.route("/new")
+    .get(articleController.getNewArticles);
+
 articleApiRouter.route("/")
     .get(articleController.getAllArticles);
 
