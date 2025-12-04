@@ -19,7 +19,8 @@ services:
     volumes:
       - './upload:/app/public/upload'
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: mysql:8

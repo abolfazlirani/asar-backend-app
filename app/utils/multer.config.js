@@ -4,8 +4,23 @@ import multerS3 from "multer-s3";
 import { S3Client } from "@aws-sdk/client-s3";
 
 // لیست نوع فایل‌های مجاز
-const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+    "image/webp",
 
+    "audio/mpeg", // mp3
+    "audio/wav", // wav
+    "audio/ogg", // ogg
+    "audio/aac", // aac
+
+    "video/mp4", // mp4
+    "video/quicktime", // mov
+    "video/x-msvideo", // avi
+    "video/webm", // webm
+
+];
 let upload;
 let memoryStorage = multer.memoryStorage();
 let inMemoryUpload = multer({ storage: memoryStorage });
