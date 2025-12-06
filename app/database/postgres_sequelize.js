@@ -102,7 +102,7 @@ Article.init(
             allowNull: true,
         },
         source: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT,
             allowNull: true,
         },
         image: {
