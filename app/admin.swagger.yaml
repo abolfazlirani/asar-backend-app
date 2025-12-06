@@ -329,7 +329,7 @@ paths:
       tags:
         - users
       summary: Update a user
-      description: Allows admin to update selected user information
+      description: Allows admin to update selected user information including profile picture
       security:
         - bearerAuth: []
       parameters:
@@ -358,13 +358,85 @@ paths:
                 national_code:
                   type: string
                   example: "1234567891"
+                email:
+                  type: string
+                  example: "user@example.com"
+                  description: User email address
+                gender:
+                  type: string
+                  example: "مرد"
+                  description: User gender (مرد/زن)
+                birthday:
+                  type: string
+                  format: date
+                  example: "1988-06-01"
+                  description: User birthday in YYYY-MM-DD format
+                education:
+                  type: string
+                  example: "لیسانس"
+                  description: User education level
                 role:
                   type: string
                   enum: [user, admin]
                   example: admin
+                is_active:
+                  type: boolean
+                  example: true
+                profile_pic:
+                  type: string
+                  format: binary
+                  description: Profile picture image file (jpeg, png, jpg, webp)
       responses:
         "200":
           description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User updated successfully"
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "d3f1c8a2-0f3c-4cf6-bb0e-2ad3bde81234"
+                      firstname:
+                        type: string
+                        example: Reza
+                      lastname:
+                        type: string
+                        example: Moradi
+                      phone:
+                        type: string
+                        example: "09125554444"
+                      role:
+                        type: string
+                        example: admin
+                      is_active:
+                        type: boolean
+                        example: true
+                      national_code:
+                        type: string
+                        example: "1234567891"
+                      profile_pic:
+                        type: string
+                        example: "https://storage.asar.app/profile_pic/profile_pic-1699999999-image.jpg"
+                      email:
+                        type: string
+                        example: "user@example.com"
+                      gender:
+                        type: string
+                        example: "مرد"
+                      birthday:
+                        type: string
+                        format: date
+                        example: "1988-06-01"
+                      education:
+                        type: string
+                        example: "لیسانس"
         "400":
           description: Invalid input
         "401":

@@ -50,23 +50,13 @@ export class Application {
 
         let swaggerFilePath = join(__dirname, "asar.swagger.yaml")
         let swaggerDocument = YAML.load(swaggerFilePath)
-        const authMiddleware = basicAuth({
-            users: { asar: "asar" },
-            challenge: true,
-            unauthorizedResponse: "Unauthorized Access",
-        })
 
-        this.#app.use("/api-docs", authMiddleware, swaggerUI.serve, swaggerUI.setup(swaggerDocument))
+        this.#app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerDocument))
 
         let adminFilePath = join(__dirname, "admin.swagger.yaml")
         let adminDocument = YAML.load(adminFilePath)
-        const adminMiddleware = basicAuth({
-            users: { admin: "adminasar" },
-            challenge: true,
-            unauthorizedResponse: "Unauthorized Access",
-        })
 
-        this.#app.use("/admin-docs", adminMiddleware, swaggerUI.serve, swaggerUI.setup(adminDocument))
+        this.#app.use("/admin-docs", swaggerUI.serve, swaggerUI.setup(adminDocument))
         this.#app.use(morgan("dev"))
         this.#app.use(express.json())
         this.#app.use(

@@ -1,4 +1,5 @@
 import { User } from "../../database/postgres_sequelize.js";
+import { getFileAddress } from "../../utils/multer.config.js";
 
 class UserController {
     async createUser(req, res, next) {
@@ -55,7 +56,19 @@ class UserController {
     async updateUser(req, res, next) {
         try {
             const { id } = req.params;
-            const { firstname, lastname, phone, national_code, role, is_active } = req.body;
+            const {
+                firstname,
+                lastname,
+                phone,
+                national_code,
+                role,
+                is_active,
+                email,
+                gender,
+                birthday,
+                education
+            } = req.body;
+            const profilePicAddress = getFileAddress(req);
 
             const user = await User.findByPk(id);
             if (!user) {
@@ -69,6 +82,11 @@ class UserController {
                 national_code: national_code ?? user.national_code,
                 role: role ?? user.role,
                 is_active: is_active ?? user.is_active,
+                profile_pic: profilePicAddress ?? user.profile_pic,
+                email: email ?? user.email,
+                gender: gender ?? user.gender,
+                birthday: birthday ?? user.birthday,
+                education: education ?? user.education,
             });
 
             return res.status(200).json({
@@ -81,6 +99,11 @@ class UserController {
                     role: user.role,
                     is_active: user.is_active,
                     national_code: user.national_code,
+                    profile_pic: user.profile_pic,
+                    email: user.email,
+                    gender: user.gender,
+                    birthday: user.birthday,
+                    education: user.education,
                 },
             });
         } catch (error) {
