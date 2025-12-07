@@ -29,6 +29,8 @@ tags:
     description: Endpoints for file management
   - name: remote_config
     description: Remote Configuration
+  - name: user
+    description: User profile management
 
 paths:
   /auth/send-otp:
@@ -811,6 +813,212 @@ paths:
           description: Unauthorized
         "404":
           description: Article not found
+  /user/profile:
+    get:
+      tags:
+        - user
+      summary: Get logged-in user's profile
+      description: Returns the profile information of the currently authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "e1f8a0d9-9cba-46cd-9ac0-b72a559f3a6f"
+                      firstname:
+                        type: string
+                        example: "علی"
+                      lastname:
+                        type: string
+                        example: "احمدی"
+                      phone:
+                        type: string
+                        example: "09123456789"
+                      email:
+                        type: string
+                        example: "ali@example.com"
+                      profile_pic:
+                        type: string
+                        nullable: true
+                        example: "https://asarmulticenter.ir/uploads/profile.jpg"
+                      gender:
+                        type: string
+                        example: "مرد"
+                      birthday:
+                        type: string
+                        format: date
+                        example: "1990-01-01"
+                      education:
+                        type: string
+                        example: "کارشناسی"
+                      role:
+                        type: string
+                        enum: [admin, user]
+                        example: "user"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-01-01T12:00:00Z"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 401
+                  message:
+                    type: string
+                    example: "unauthorized request"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 404
+                  message:
+                    type: string
+                    example: "User not found"
+    put:
+      tags:
+        - user
+      summary: Update logged-in user's profile
+      description: Updates the profile information of the currently authenticated user. Phone number cannot be updated.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                firstname:
+                  type: string
+                  example: "علی"
+                lastname:
+                  type: string
+                  example: "احمدی"
+                email:
+                  type: string
+                  format: email
+                  example: "ali@example.com"
+                profile_pic:
+                  type: string
+                  format: binary
+                  description: "Profile picture file"
+                gender:
+                  type: string
+                  example: "مرد"
+                birthday:
+                  type: string
+                  format: date
+                  example: "1990-01-01"
+                education:
+                  type: string
+                  example: "کارشناسی"
+      responses:
+        "200":
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Profile updated successfully"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      firstname:
+                        type: string
+                      lastname:
+                        type: string
+                      phone:
+                        type: string
+                      email:
+                        type: string
+                      profile_pic:
+                        type: string
+                        nullable: true
+                      gender:
+                        type: string
+                      birthday:
+                        type: string
+                        format: date
+                      education:
+                        type: string
+                      role:
+                        type: string
+                      createdAt:
+                        type: string
+                        format: date-time
+        "400":
+          description: Bad request (Invalid email format)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 400
+                  message:
+                    type: string
+                    example: "Invalid email format"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 401
+                  message:
+                    type: string
+                    example: "unauthorized request"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 404
+                  message:
+                    type: string
+                    example: "User not found"
   /remote_config/splash:
     post:
       tags:

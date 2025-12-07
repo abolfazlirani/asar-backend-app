@@ -9,6 +9,7 @@ import { articleBookmarkApiRouter } from "./api/article.bookmark.api.router.js";
 import { articleLikeApiRouter } from "./api/article.like.api.router.js";
 import { pageApiRouter } from "./api/page.api.router.js";
 import fileRouter from "./api/file.router.js";
+import { userRouter } from "./api/user.router.js";
 
 const mainRouter = Router();
 
@@ -21,6 +22,7 @@ mainRouter.use('/article_bookmarks', articleBookmarkApiRouter);
 mainRouter.use('/article_likes', articleLikeApiRouter);
 mainRouter.use('/pages', pageApiRouter);
 mainRouter.use('/file', fileRouter);
+mainRouter.use('/user', userRouter);
 
 mainRouter.use('/admin', adminRouter);
 
