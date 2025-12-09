@@ -48,3 +48,25 @@ export function authorizeAdmin(req, res, next) {
         message: "forbidden",
     });
 }
+
+export function authorizeEditor(req, res, next) {
+    if (req.user.role === "editor") {
+        return next();
+    }
+
+    return res.status(403).json({
+        status: 403,
+        message: "forbidden - editor role required",
+    });
+}
+
+export function authorizeAdminOrEditor(req, res, next) {
+    if (req.user.role === "admin" || req.user.role === "editor") {
+        return next();
+    }
+
+    return res.status(403).json({
+        status: 403,
+        message: "forbidden - admin or editor role required",
+    });
+}

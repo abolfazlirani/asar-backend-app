@@ -13,6 +13,13 @@ class UserController {
                 });
             }
 
+            // Validate role if provided
+            if (role && !["admin", "user", "editor"].includes(role)) {
+                return res.status(400).json({
+                    message: "Invalid role. Valid roles are: admin, user, editor",
+                });
+            }
+
             const user = await User.create({
                 firstname,
                 lastname,
@@ -75,7 +82,15 @@ class UserController {
                 return res.status(404).json({ message: "User not found" });
             }
 
-            await user.update({
+            // Validate role if provided
+            if (role && !["admin", "user", "editor"].includes(role)) {
+                return res.status(400).json({
+                    message: "Invalid role. Valid roles are: admin, user, editor",
+                });
+            }
+
+            // Track who assigned the role if role is being changed
+            const updateData = {
                 firstname: firstname ?? user.firstname,
                 lastname: lastname ?? user.lastname,
                 phone: phone ?? user.phone,
@@ -87,7 +102,14 @@ class UserController {
                 gender: gender ?? user.gender,
                 birthday: birthday ?? user.birthday,
                 education: education ?? user.education,
-            });
+            };
+
+            // If role is being changed, track who made the change
+            if (role && role !== user.role) {
+                updateData.roled_by = req.user.id;
+            }
+
+            await user.update(updateData);
 
             return res.status(200).json({
                 message: "User updated successfully",

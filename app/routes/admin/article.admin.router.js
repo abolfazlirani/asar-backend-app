@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { upload } from "../../utils/multer.config.js";
 import { articleController } from "../../http/controllers/article.controller.js";
-import { authorizeAdmin, authorizeRequest } from "../../http/middlewares/auth.middleware.js";
+import { authorizeAdminOrEditor, authorizeRequest } from "../../http/middlewares/auth.middleware.js";
 
 const articleAdminRouter = Router();
 
-articleAdminRouter.use(authorizeRequest, authorizeAdmin);
+articleAdminRouter.use(authorizeRequest, authorizeAdminOrEditor);
 
 const uploadFields = upload.fields([
     { name: 'image', maxCount: 1 },

@@ -50,12 +50,17 @@ export class Application {
         let swaggerFilePath = join(__dirname, "asar.swagger.yaml")
         let swaggerDocument = YAML.load(swaggerFilePath)
 
-        this.#app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerDocument))
+        // Use separate swagger instances to prevent override
+        const swaggerUiOptions = {
+            explorer: true
+        }
+
+        this.#app.use("/api-docs", swaggerUI.serveFiles(swaggerDocument, swaggerUiOptions), swaggerUI.setup(swaggerDocument, swaggerUiOptions))
 
         let adminFilePath = join(__dirname, "admin.swagger.yaml")
         let adminDocument = YAML.load(adminFilePath)
 
-        this.#app.use("/admin-docs", swaggerUI.serve, swaggerUI.setup(adminDocument))
+        this.#app.use("/admin-docs", swaggerUI.serveFiles(adminDocument, swaggerUiOptions), swaggerUI.setup(adminDocument, swaggerUiOptions))
         this.#app.use(morgan("dev"))
         this.#app.use(express.json())
         this.#app.use(

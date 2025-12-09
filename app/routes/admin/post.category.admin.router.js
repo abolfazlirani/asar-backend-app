@@ -1,27 +1,34 @@
 import { Router } from "express";
 import { upload } from "../../utils/multer.config.js";
 import { postCategoryController } from "../../http/controllers/postCategory.controller.js";
-import { authorizeAdmin, authorizeRequest } from "../../http/middlewares/auth.middleware.js";
+import { authorizeAdmin, authorizeAdminOrEditor, authorizeRequest } from "../../http/middlewares/auth.middleware.js";
 
 const postCategoryAdminRouter = Router();
 
-postCategoryAdminRouter.use(authorizeRequest, authorizeAdmin);
-
+// GET endpoints - accessible by both admin and editor
 postCategoryAdminRouter.route("/all")
-    .get(postCategoryController.getAllCategoriesAdmin);
+    .get(authorizeRequest, authorizeAdminOrEditor, postCategoryController.getAllCategoriesAdmin);
 
 postCategoryAdminRouter.route("/")
+    .get(authorizeRequest, authorizeAdminOrEditor, postCategoryController.getCategories)
     .post(
+        authorizeRequest,
+        authorizeAdmin,
         upload.single("image"),
         postCategoryController.createCategory
-    )
-    .get(postCategoryController.getCategories);
+    );
 
 postCategoryAdminRouter.route("/:id")
     .put(
+        authorizeRequest,
+        authorizeAdmin,
         upload.single("image"),
         postCategoryController.updateCategory
     )
-    .delete(postCategoryController.deleteCategory);
+    .delete(
+        authorizeRequest,
+        authorizeAdmin,
+        postCategoryController.deleteCategory
+    );
 
 export { postCategoryAdminRouter };

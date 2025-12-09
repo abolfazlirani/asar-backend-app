@@ -2,8 +2,18 @@ openapi: 3.0.0
 info:
   title: Asar – Admin API
   version: 1.0.0
-  description: >
-    This documentation contains admin-only endpoints for managing users, remote config logs, categories, articles, comments, bookmarks, and other administrative tasks in the Asar Gold project.
+  description: |
+    This documentation contains admin-level endpoints for managing users, remote config logs, categories, articles, comments, bookmarks, and other administrative tasks in the Asar Gold project.
+    
+    ### User Roles
+    
+    The system supports three user roles:
+    
+    - **admin**: Full access to all administrative endpoints, including user management, categories, pages, articles, comments, and system configuration.
+    - **editor**: Limited access focused on article/content management. Editors can create, update, delete, and view articles. They also have read-only access to view categories (needed for selecting categories when creating articles), but cannot access other administrative features like user management or system settings.
+    - **user**: Standard user with no administrative privileges (documented in the main API spec).
+    
+    Admins can assign users to the editor role via the user management endpoints.
 
 servers:
   - url: http://localhost:1000/api/v1
@@ -19,9 +29,9 @@ tags:
   - name: pages
     description: Endpoints for managing dynamic pages (admin only)
   - name: categories
-    description: Endpoints for managing post categories (admin only)
+    description: Endpoints for managing post categories (admin only for create/update/delete, admin or editor for viewing)
   - name: articles
-    description: Endpoints for managing articles (posts) (admin only)
+    description: Endpoints for managing articles (posts) (admin or editor role)
   - name: comments
     description: Endpoints for managing comments (admin only)
   - name: bookmarks
@@ -241,7 +251,7 @@ paths:
                   example: "securepassword123"
                 role:
                   type: string
-                  enum: [user, admin]
+                  enum: [user, admin, editor]
                   example: user
       responses:
         "201":
@@ -377,7 +387,7 @@ paths:
                   description: User education level
                 role:
                   type: string
-                  enum: [user, admin]
+                  enum: [user, admin, editor]
                   example: admin
                 is_active:
                   type: boolean
@@ -720,8 +730,8 @@ paths:
     get:
       tags:
         - categories
-      summary: Get all categories (admin)
-      description: Returns a list of categories, filterable by parentId or lang.
+      summary: Get all categories (admin or editor)
+      description: Returns a list of categories, filterable by parentId or lang. Accessible by admin and editor roles.
       security:
         - bearerAuth: []
       parameters:
@@ -861,8 +871,8 @@ paths:
       tags:
         - articles
       summary: Create a new article
-      description: >
-        Allows an admin to create a new article.
+      description: |
+        Allows an admin or editor to create a new article.
         - If `post_type` is 'article', `content` is required.
         - If `post_type` is 'audio', 'video', or 'poster', a `source` file is required.
       security:
@@ -998,7 +1008,7 @@ paths:
       tags:
         - articles
       summary: Update an article
-      description: Allows admin to update an article's details.
+      description: Allows admin or editor to update an article's details.
       security:
         - bearerAuth: []
       parameters:
@@ -1064,7 +1074,7 @@ paths:
       tags:
         - articles
       summary: Delete an article
-      description: Allows admin to delete an article by ID.
+      description: Allows admin or editor to delete an article by ID.
       security:
         - bearerAuth: []
       parameters:

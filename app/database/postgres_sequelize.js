@@ -27,17 +27,17 @@ export async function initializeConnectionToPG() {
 }
 
 
-export class User extends Model {}
-export class OtpCode extends Model {}
-export class Notification extends Model {}
-export class UserDeviceLog extends Model {}
-export class Article extends Model {}
-export class PostCategory extends Model {}
-export class Comment extends Model {}
-export class CommentLike extends Model {}
-export class ArticleBookmark extends Model {}
-export class ArticleLike extends Model {}
-export class Page extends Model {}
+export class User extends Model { }
+export class OtpCode extends Model { }
+export class Notification extends Model { }
+export class UserDeviceLog extends Model { }
+export class Article extends Model { }
+export class PostCategory extends Model { }
+export class Comment extends Model { }
+export class CommentLike extends Model { }
+export class ArticleBookmark extends Model { }
+export class ArticleLike extends Model { }
+export class Page extends Model { }
 PostCategory.init(
     {
         id: {
@@ -197,11 +197,11 @@ User.init(
         firstname: {
             type: DataTypes.STRING,
 
-            allowNull: true,defaultValue:""
+            allowNull: true, defaultValue: ""
         },
         lastname: {
             type: DataTypes.STRING,
-            allowNull: true,defaultValue:""
+            allowNull: true, defaultValue: ""
         },
         national_code: {
             type: DataTypes.STRING,
@@ -218,15 +218,15 @@ User.init(
         },
         email: {
             type: DataTypes.STRING,
-            allowNull: true,defaultValue:""
+            allowNull: true, defaultValue: ""
         },
         gender: {
             type: DataTypes.STRING,
-            allowNull: true,defaultValue:""
+            allowNull: true, defaultValue: ""
         },
         education: {
             type: DataTypes.STRING,
-            allowNull: true,defaultValue:""
+            allowNull: true, defaultValue: ""
         },
         document_image: {
             type: DataTypes.STRING,
@@ -245,7 +245,7 @@ User.init(
             allowNull: true,
         },
         role: {
-            type: DataTypes.ENUM("admin", "user"),
+            type: DataTypes.ENUM("admin", "user", "editor"),
             defaultValue: "user",
         },
         roled_by: {
