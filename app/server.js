@@ -11,7 +11,6 @@ import { initializeConnectionToPG, sequelize } from "./database/postgres_sequeli
 import YAML from "yamljs"
 import swaggerUI from "swagger-ui-express"
 import basicAuth from "express-basic-auth"
-
 dotenv.config()
 
 export class Application {
@@ -118,6 +117,11 @@ export class Application {
         this.#app.get("/", (req, res, next) => {
             return res.redirect("https://asar.app")
         })
-        this.#app.use("/api/v1", mainRouter)
+        this.#app.get("*", (req, res) => {
+            const __filename = fileURLToPath(import.meta.url)
+            const __dirname = dirname(__filename)
+            let indexPath = join(__dirname, "..", "public", "index.html")
+            res.sendFile(indexPath)
+        })
     }
 }

@@ -7,7 +7,7 @@ info:
 servers:
   - url: http://localhost:1000/api/v1
     description: Local Development
-  - url: https://asarmulticenter.ir/app/api/v1
+  - url: https://asarmulticenter.ir/api/v1
     description: Production
 
 tags:
