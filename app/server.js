@@ -114,14 +114,23 @@ export class Application {
     }
 
     createRoute() {
-        this.#app.get("/", (req, res, next) => {
-            return res.redirect("https://asar.app")
-        })
-        this.#app.get("*", (req, res) => {
+        // 1) API routes
+        this.#app.use("/api/v1", mainRouter)
+
+        // 2) SPA fallback ONLY for non-API requests
+        this.#app.get("*", (req, res, next) => {
+            if (req.path.startsWith("/api")) {
+                return next() // اجازه بده API به router برسد
+            }
+
             const __filename = fileURLToPath(import.meta.url)
             const __dirname = dirname(__filename)
-            let indexPath = join(__dirname, "..", "public", "index.html")
-            res.sendFile(indexPath)
+            const indexPath = join(__dirname, "..", "public", "index.html")
+
+            return res.sendFile(indexPath)
         })
+
+        // 3) Global error handler
     }
+
 }
