@@ -320,7 +320,7 @@ class ArticleController {
                         message: "Field `source` file is required for this post type.",
                     });
                 }
-                newContent = null;
+                // Don't null out content - allow content for all post types
             }
 
             await article.update({
